@@ -1,6 +1,7 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
+#include <ctype.h>
 
 char *readstring(FILE *infile) {
    /* makes the string lower case too */
@@ -15,7 +16,7 @@ char *readstring(FILE *infile) {
    for (c = getc(infile); (c != EOF) && isalpha(c); c = getc(infile))
       /* goes until we reach our first character */
 
-   for (len = 0; (c != EOF) && isalpha(c); c = getc(infile)) {
+   for (len = 0; (c != EOF) && (!isalpha(c)); c = getc(infile)) {
       if (size < (len + 5)) {  /* if our buffer is too small, increase size */
          size += 50;
          buffer = (char*)realloc(buffer, size * sizeof(char));
@@ -23,7 +24,7 @@ char *readstring(FILE *infile) {
       buffer[len++] = tolower(c); /* append character to buffer */
    }
    buffer[len] = '\0'; /* append null character to signify end of word */
-  
+ 
    if (len > 0)  /* if our string has anything in it, we want to return that. */
       final = buffer;
    else  /* otherwise, just return nothing */

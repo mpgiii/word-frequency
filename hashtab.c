@@ -11,7 +11,7 @@ struct nlist {  /* nodes for hashtable */
 
 #define HASHSIZE 32768
 
-static struct nlist *hashtab = NULL; /* the hashtable itself */
+static struct nlist **hashtab = NULL; /* the hashtable itself */
 
 void init() {
    hashtab = (struct nlist*) calloc(HASHSIZE, sizeof(struct nlist));
@@ -28,11 +28,11 @@ unsigned hash(char *s) {  /* hashing function, from K&R */
    return hashval % HASHSIZE;
 }
 
-struct nlist lookup(char *s) {  /* find the node corresponding to a character */
-   struct nlist np;
+struct nlist *lookup(char *s) {  /* find the node corresponding to a character */
+   struct nlist *np;
   
-   for (np = hashtab[hash(s)]; np != NULL; np = *np.next) {
-      if (strcmp(s, np.name) == 0) {
+   for (np = hashtab[hash(s)]; np != NULL; np = np->next) {
+      if (strcmp(s, np->name) == 0) {
          return np;
       }
    }
@@ -48,13 +48,13 @@ void insert(char *s) {   /* inserts new word into hashtable */
    strcpy(np->name, s);
    np->next = NULL;
    np->count = 1;
-   hashtab[hash(s)] = *np;
+   hashtab[hash(s)] = np;
 }
 
 void addtocount(char *s) { /* increments count of node */
-   struct nlist np;
+   struct nlist* np;
    if ((np = lookup(s)) != NULL)
-      np.count += 1;
+      np->count += 1;
    else insert(s);
 }
 
@@ -89,8 +89,8 @@ void print_words(struct nlist* a) {
 /*********** BELOW: DOES NOT YET SORT VALUES BEFORE RETURNING *********/
 
 struct nlist *getlist(int n) {
-   struct nlist *res;
-   struct nlist np;
+   struct nlist **res;
+   struct nlist *np;
    int i;
 
    res = (struct nlist *) malloc((n+1) * sizeof(struct nlist));
@@ -99,7 +99,7 @@ struct nlist *getlist(int n) {
       exit(-1);
    }
 
-   for (i = 0; (np != NULL) && (i < n); np = *np.next) {
+   for (i = 0; (np != NULL) && (i < n); np = np->next) {
       res[i] = np;
    }
    res[i] = NULL; /* list ends in a NULL to show end */

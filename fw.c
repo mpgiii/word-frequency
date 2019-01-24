@@ -1,20 +1,24 @@
 #include <stdlib.h>
+#include <string.h>
 
 #include "readstring.h"
 #include "hashtab.h"
 
 int main(int argc, char *argv[]) {
    FILE *infile;
-   int i;
    int num_words = 10; /* default word count */
-   int num_of_files;
+   int num_of_files = 1;
    char *current_word;
 
 
    if (argc > 1) {
-      if (strncmp(argv[1], "-n")) {
+      if (!(strcmp(argv[1], "-n"))) {
          if (argc > 2) {
-            /* parse the int here and set it to num_words. not sure how yet */
+            num_words = atoi(argv[2]);
+            if (num_words == 0) {
+               perror("atoi");
+               exit(-1);
+            }
             num_of_files = 3;
          }
          else {
@@ -34,5 +38,8 @@ int main(int argc, char *argv[]) {
       while ((current_word = readstring(infile)) != NULL) {
          addtocount(current_word);
       }
+      num_of_files++;
    }
+   
+   return(1);
 }
