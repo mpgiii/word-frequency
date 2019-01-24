@@ -88,7 +88,7 @@ void print_words(struct nlist* a) {
 
 /*********** BELOW: DOES NOT YET SORT VALUES BEFORE RETURNING *********/
 
-struct nlist *getlist(int n) {
+struct nlist **getlist(int n) {
    struct nlist **res;
    struct nlist *np;
    int i;

@@ -9,7 +9,7 @@ int main(int argc, char *argv[]) {
    int num_words = 10; /* default word count */
    int num_of_files = 1;
    char *current_word;
-
+   struct nlist **res;
 
    if (argc > 1) {
       if (!(strcmp(argv[1], "-n"))) {
@@ -40,6 +40,8 @@ int main(int argc, char *argv[]) {
       }
       num_of_files++;
    }
+
+   res = getlist(num_words);
    
    return(1);
 }
