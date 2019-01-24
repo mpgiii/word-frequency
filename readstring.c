@@ -15,7 +15,7 @@ char *readstring(FILE *infile) {
    for (c = getc(infile); (c != EOF) && isalpha(c); c = getc(infile))
       /* goes until we reach our first character */
 
-   for (len = 0; isalpha(c) && (c != EOF); c = getc(infile)) {
+   for (len = 0; (c != EOF) && isalpha(c); c = getc(infile)) {
       if (size < (len + 5)) {  /* if our buffer is too small, increase size */
          size += 50;
          buffer = (char*)realloc(buffer, size * sizeof(char));
