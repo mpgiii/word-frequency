@@ -93,6 +93,7 @@ int main(int argc, char *argv[]) {
       }
    }
    else {
+      /* if there are no arguments, use stdin */
       infile = stdin;
       current_word = readstring(infile);
       while (current_word != NULL) {

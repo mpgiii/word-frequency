@@ -9,7 +9,7 @@ struct nlist {  /* nodes for hashtable */
    int count;
 };
 
-#define HASHSIZE 32768
+#define HASHSIZE 9999999
 
 struct nlist *first = NULL; /* head of linked list */
 static struct nlist **hashtab = NULL; /* the hashtable itself */
@@ -28,65 +28,93 @@ unsigned long hash(char *s) {  /* hashing function, from K&R */
    unsigned long hashval;
 
    for (hashval = 0; s && *s; s++) {
-      hashval = ((hashval << 2) + (*s) - 'a');
+      hashval = *s + 31 * hashval;
    }
 
    return hashval % HASHSIZE;
 }
 
-struct nlist *lookup(char *s) {  /* find the node for a character */
+struct nlist *newnlist(char *s) {
    struct nlist *np;
    
-   if ((np = hashtab[hash(s)]) != NULL)
-      return np;
-
-   return NULL;
-   
-}
-
-void insert(char *s) {   /* inserts new word into hashtable */
-   
-   struct nlist *np;
-   
+   /* first, allocate space for both our pointer and the
+    * string it will contain */
    np = (struct nlist*) malloc(sizeof(struct nlist));
    if (!np) {
       perror("malloc");
       exit(-1);
    }
-
-   np->name = (char*) malloc(strlen(s) + 1);
-   if (!(np->name)) {
+   np->name = (char*) malloc(strlen(s));
+   if (!np) {
       perror("malloc");
       exit(-1);
    }
-
+   
+   /* once memory is allocated, stick the string parameter
+    * into the node, set its count to 1 (as this is the
+    * first occurance), and set its tail to NULL (will be
+    * set in another function, if needed. */
    strcpy(np->name, s);
    np->count = 1;
-   /* put the string into the node, with a count of 1 */
-  
-   if (first == NULL) {
-      np->next = last;
-   }
-
-   else {
-      np->next = first;
-   }
-
-   first = np;
-   hashtab[hash(s)] = np;
-   /* finally put the node into the table for easy access */
+   np->next = NULL;
+   return np;
+   
 }
 
-int addtocount(char *s) { /* increments count of node */
-   struct nlist* np;
-   /*if the node is in the table, increment its count and return a 1 */
-   if ((np = lookup(s)) != NULL) {
-      np->count += 1;
-      return(1);
+int addtocount(char *s) {
+   /*returns a 0 if word is not in hash table */
+   int result = 0;
+   int index;
+   struct nlist *np;
+   struct nlist *firstinhash;
+   
+   index = hash(s);
+   firstinhash = hashtab[index];
+   /*grab whatever is stored at the index in our hashtable
+    *that corresponds to this string */
+   
+   for (np = firstinhash; np; np = np->next) {
+      /* goes through all nlist's stored in this index.
+       * if empty, for loop will do nothing */
+      if (!strcmp(np->name, s)) {
+         /* if we find an nlist with the string we are looking for,
+          * add one to its count and set the result to 1 to
+          * indicate the word was already in the hash table */
+         np->count += 1;
+         result = 1;
+         break;
+      }
    }
-   /* otherwise, insert it into the table and return a 0 */
-   insert(s);
-   return(0);
+   
+   
+   
+   if (np == NULL) {
+      /* if the string we were looking for isn't already there */
+      np = newnlist(s);
+      /* create a new nlist with our string */
+      if (firstinhash) {
+         /* if there were values in this index of our hash table,
+          * set this new nlist to the front of this index */
+         np->next = firstinhash;
+      }
+      if (first == NULL) {
+         /* if this is our first value inserted, set its tail
+          * to null to indicate the end of our linked list */
+         np->next = last;
+      }
+      else {
+         /* if not, set its tail to the first item in the list */
+         np->next = first;
+      }
+
+      first = np;
+      /* then set the front of the linked list to this new node. */
+      
+      hashtab[index] = np;
+      /* last but not least, stick that node into the hash table */
+   }
+   
+   return result;
 }
 
 int comparewords(struct nlist* a, struct nlist* b) {
@@ -133,7 +161,6 @@ void split(struct nlist* source, struct nlist** front, struct nlist** back) {
 
 struct nlist* SortedMerge(struct nlist* a, struct nlist* b) {
    struct nlist* result = NULL;
-   int strc;
 
    if (a == NULL)
       return(b);
@@ -146,8 +173,7 @@ struct nlist* SortedMerge(struct nlist* a, struct nlist* b) {
    }
 
    else if (a->count == b->count) {
-      strc = strcmp(a->name, b->name);
-      if (strc > 0) {
+      if (strcmp(a->name, b->name) > 0) {
          result = a;
          result->next = SortedMerge(a->next, b);
       }
