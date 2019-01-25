@@ -24,11 +24,11 @@ void init() {
    }
 }
 
-unsigned hash(char *s) {  /* hashing function, from K&R */
+unsigned long hash(char *s) {  /* hashing function, from K&R */
    unsigned long hashval;
 
    for (hashval = 0; s && *s; s++) {
-      hashval = ((hashval<<2) + (*s) - 'a');
+      hashval = ((hashval << 2) + (*s) - 'a');
    }
 
    return hashval % HASHSIZE;
