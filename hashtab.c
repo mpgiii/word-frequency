@@ -11,11 +11,14 @@ struct nlist {  /* nodes for hashtable */
 
 #define HASHSIZE 32768
 
+struct nlist *first = NULL; /* head of linked list */
 static struct nlist **hashtab = NULL; /* the hashtable itself */
+struct nlist *last = NULL; /* tail of linked list */
 
 void init() {
-   hashtab = (struct nlist*) calloc(HASHSIZE, sizeof(struct nlist));
+   hashtab = (struct nlist**) calloc(HASHSIZE, sizeof(struct nlist));
    if (!hashtab) {
+      perror("calloc");
       exit(-1);
    }
 }
@@ -40,22 +43,52 @@ struct nlist *lookup(char *s) {  /* find the node corresponding to a character *
 }
 
 void insert(char *s) {   /* inserts new word into hashtable */
+   
    struct nlist *np;
+   
    np = (struct nlist*) malloc(sizeof(struct nlist));
    if (!np) {
+      perror("malloc");
       exit(-1);
    }
+
+   np->name = (char*) malloc(strlen(s));
+   if (!(np->name)) {
+      perror("malloc");
+      exit(-1);
+   }
+
    strcpy(np->name, s);
-   np->next = NULL;
    np->count = 1;
+   /* put the string into the node, with a count of 1 */
+  
+
+   if (first == NULL) {
+      first = np;
+      np->next = last;
+   }
+   /* if this is the first node inserted, set it's next to null */
+
+   else {
+      np->next = first;
+      first = np;
+   }
+   /* otherwise, set the next to the last node inserted */
+
    hashtab[hash(s)] = np;
+   /* finally put the node into the table for easy access */
 }
 
-void addtocount(char *s) { /* increments count of node */
+int addtocount(char *s) { /* increments count of node */
    struct nlist* np;
-   if ((np = lookup(s)) != NULL)
+   /*if the node is in the table, increment its count and return a 1 */
+   if ((np = lookup(s)) != NULL) {
       np->count += 1;
-   else insert(s);
+      return(1);
+   }
+   /* otherwise, insert it into the table and return a 0 */
+   insert(s);
+   return(0);
 }
 
 int comparewords(struct nlist* a, struct nlist* b) {
@@ -86,22 +119,71 @@ void print_words(struct nlist* a) {
    }
 }
 
-/*********** BELOW: DOES NOT YET SORT VALUES BEFORE RETURNING *********/
+/*********** BELOW: SORTING ALGORITHM *********/
+/* A mergesort algorithm, Worst/Average/Best case O(n log n) efficiency. */
 
-struct nlist **getlist(int n) {
-   struct nlist **res;
-   struct nlist *np;
-   int i;
 
-   res = (struct nlist *) malloc((n+1) * sizeof(struct nlist));
-   if (!res) {
-      perror("malloc");
-      exit(-1);
+void split(struct nlist* source, struct nlist** front, struct nlist** back) {
+   struct nlist* fast;
+   struct nlist* slow;
+
+   slow = source;
+   fast = source->next;
+
+   while (fast != NULL) {
+      fast = fast->next;
+      if (fast != NULL) {
+         slow = slow->next;
+         fast = fast->next;
+      }
    }
 
-   for (i = 0; (np != NULL) && (i < n); np = np->next) {
-      res[i] = np;
+   *front = source;
+   *back = slow->next;
+   slow->next = NULL;
+}
+
+struct nlist* SortedMerge(struct nlist* a, struct nlist* b) {
+   struct nlist* result = NULL;
+
+   if (a == NULL)
+      return(b);
+   else if (b == NULL)
+      return(a);
+
+   if (a->count >= b->count) {
+      result = a;
+      result->next = SortedMerge(a->next, b);
    }
-   res[i] = NULL; /* list ends in a NULL to show end */
-   return res;
+
+   else {
+      result = b;
+      result->next = SortedMerge(a, b->next);
+   }
+
+   return(result);
+}
+
+void mergesort(struct nlist **start) {
+   struct nlist* head = *start;
+   struct nlist* a;
+   struct nlist* b;
+   
+   if ((head == NULL) || (head->next == NULL)) {
+      return;
+   }
+
+   split(head, &a, &b);
+
+   mergesort(&a);
+   mergesort(&b);
+
+   *start = SortedMerge(a, b);
+}
+
+struct nlist *getsortedlist() {
+   /* runs the mergesort algorithm on the list and returns the
+    * head of the sorted list (the highest occurring word) */
+   mergesort(&first);
+   return first;
 }

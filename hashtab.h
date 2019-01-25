@@ -8,7 +8,7 @@ struct nlist {
 };
 
 extern void init();
-extern void addtocount(char *s);
-extern struct nlist *getlist(int n);
+extern int addtocount(char *s);
+extern struct nlist *getsortedlist();
 
 #endif
