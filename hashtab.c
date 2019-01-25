@@ -15,6 +15,7 @@ struct nlist *first = NULL; /* head of linked list */
 static struct nlist **hashtab = NULL; /* the hashtable itself */
 struct nlist *last = NULL; /* tail of linked list */
 
+
 void init() {
    hashtab = (struct nlist**) calloc(HASHSIZE, sizeof(struct nlist));
    if (!hashtab) {
@@ -24,22 +25,23 @@ void init() {
 }
 
 unsigned hash(char *s) {  /* hashing function, from K&R */
-   unsigned hashval;
-   
-   for (hashval = 0; *s != '\0'; s++)
-      hashval = *s + 31 * hashval;
+   unsigned long hashval;
+
+   for (hashval = 0; s && *s; s++) {
+      hashval = ((hashval<<2) + (*s) - 'a');
+   }
+
    return hashval % HASHSIZE;
 }
 
-struct nlist *lookup(char *s) {  /* find the node corresponding to a character */
+struct nlist *lookup(char *s) {  /* find the node for a character */
    struct nlist *np;
-  
-   for (np = hashtab[hash(s)]; np != NULL; np = np->next) {
-      if (strcmp(s, np->name) == 0) {
-         return np;
-      }
-   }
+   
+   if ((np = hashtab[hash(s)]) != NULL)
+      return np;
+
    return NULL;
+   
 }
 
 void insert(char *s) {   /* inserts new word into hashtable */
@@ -52,7 +54,7 @@ void insert(char *s) {   /* inserts new word into hashtable */
       exit(-1);
    }
 
-   np->name = (char*) malloc(strlen(s));
+   np->name = (char*) malloc(strlen(s) + 1);
    if (!(np->name)) {
       perror("malloc");
       exit(-1);
@@ -62,19 +64,15 @@ void insert(char *s) {   /* inserts new word into hashtable */
    np->count = 1;
    /* put the string into the node, with a count of 1 */
   
-
    if (first == NULL) {
-      first = np;
       np->next = last;
    }
-   /* if this is the first node inserted, set it's next to null */
 
    else {
       np->next = first;
-      first = np;
    }
-   /* otherwise, set the next to the last node inserted */
 
+   first = np;
    hashtab[hash(s)] = np;
    /* finally put the node into the table for easy access */
 }
@@ -108,16 +106,6 @@ int comparewords(struct nlist* a, struct nlist* b) {
    return final;
 }
 
-void print_words(struct nlist* a) {
-   if (a) {
-      printf("The current words contained in this list are:\n");
-      for (; a; a = a->next)
-         printf("%s, %d\n", a -> name, a -> count);
-   }
-   else {
-      printf("There are no words contained in this list.");
-   }
-}
 
 /*********** BELOW: SORTING ALGORITHM *********/
 /* A mergesort algorithm, Worst/Average/Best case O(n log n) efficiency. */
@@ -145,15 +133,28 @@ void split(struct nlist* source, struct nlist** front, struct nlist** back) {
 
 struct nlist* SortedMerge(struct nlist* a, struct nlist* b) {
    struct nlist* result = NULL;
+   int strc;
 
    if (a == NULL)
       return(b);
    else if (b == NULL)
       return(a);
 
-   if (a->count >= b->count) {
+   if (a->count > b->count) {
       result = a;
       result->next = SortedMerge(a->next, b);
+   }
+
+   else if (a->count == b->count) {
+      strc = strcmp(a->name, b->name);
+      if (strc > 0) {
+         result = a;
+         result->next = SortedMerge(a->next, b);
+      }
+      else {
+         result = b;
+         result->next = SortedMerge(a, b->next);
+      }
    }
 
    else {
