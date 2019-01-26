@@ -142,6 +142,12 @@ int comparewords(struct nlist* a, struct nlist* b) {
 void split(struct nlist* source, struct nlist** front, struct nlist** back) {
    struct nlist* fast;
    struct nlist* slow;
+   
+   if (source == NULL || source->next == NULL) {
+      *front = source;
+      *back = NULL;
+      return;      
+   }
 
    slow = source;
    fast = source->next;
@@ -162,25 +168,16 @@ void split(struct nlist* source, struct nlist** front, struct nlist** back) {
 struct nlist* SortedMerge(struct nlist* a, struct nlist* b) {
    struct nlist* result = NULL;
 
-   if (a == NULL)
+   if (a == NULL) {
       return(b);
-   else if (b == NULL)
+   }
+   else if (b == NULL) {
       return(a);
-
-   if (a->count > b->count) {
-      result = a;
-      result->next = SortedMerge(a->next, b);
    }
 
-   else if (a->count == b->count) {
-      if (strcmp(a->name, b->name) > 0) {
-         result = a;
-         result->next = SortedMerge(a->next, b);
-      }
-      else {
-         result = b;
-         result->next = SortedMerge(a, b->next);
-      }
+   if (comparewords(a, b) > 0) {
+      result = a;
+      result->next = SortedMerge(a->next, b);
    }
 
    else {
