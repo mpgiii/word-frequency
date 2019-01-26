@@ -175,14 +175,14 @@ struct nlist* SortedMerge(struct nlist* a, struct nlist* b) {
       return(a);
    }
 
-   if (comparewords(a, b) > 0) {
-      result = a;
-      result->next = SortedMerge(a->next, b);
+   if (comparewords(a, b) < 0) {
+      result = b;
+      result->next = SortedMerge(a, b->next);
    }
 
    else {
-      result = b;
-      result->next = SortedMerge(a, b->next);
+      result = a;
+      result->next = SortedMerge(a->next, b);
    }
 
    return(result);
@@ -204,6 +204,8 @@ void mergesort(struct nlist **start) {
 
    *start = SortedMerge(a, b);
 }
+
+
 
 struct nlist *getsortedlist() {
    /* runs the mergesort algorithm on the list and returns the
