@@ -17,7 +17,3 @@ user would like to view more or fewer results,
 the command line flag "-n" can be used.
 
 Usage: fw [-n num] [file1 [file2 ...] ]
-
-Michael Georgariou
-01/25/2019
-CPE 357-01
